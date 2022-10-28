@@ -127,3 +127,7 @@ g1 <- ggplot(data_abx %>% filter(drug %in% c("Quinolones", "1G_quinolones", "2G_
   ggtitle("J01M Quinolones")
 ggsave("plots/quinolones_variation_setting_country.pdf", width = 10, height = 8)
 
+
+#### Explore ranges
+data_abx %>% group_by(drug,setting) %>% summarise(min = min(value), max = max(value)) %>% arrange(desc(max))
+data_abx %>% group_by(drug,setting) %>% summarise(min = min(value), max = max(value)) %>% arrange(desc(-min)) %>% print(n=30)

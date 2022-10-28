@@ -48,3 +48,7 @@ write.csv(data_cass %>% select(country, total_inc_median) %>% rename("infection_
           "data/cass_infection_output.csv")
 ## cut and paste into file with antibiotic use - first column of data_amr_abx_use_macotra.csv
 
+# Ranges on data
+data_cass %>% filter(total_inc_median == min(data_cass$total_inc_median, na.rm=TRUE))
+data_cass %>% filter(total_inc_median == max(data_cass$total_inc_median, na.rm=TRUE))
+
