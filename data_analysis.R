@@ -550,4 +550,5 @@ g42 <- ggplot(data_abx %>% filter(!country == "Portugal",
   theme(strip.text.y = element_text(angle = 0)) + 
   guides(fill="none", col = "none")
 
-g41 + g42
+g41 + g42 + plot_annotation(tag_levels = "A") + plot_layout(widths = c(1, 3))
+ggsave("plots/fig4.pdf", width = 25, height = 10)
