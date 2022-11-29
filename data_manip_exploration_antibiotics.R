@@ -5,6 +5,7 @@
 library(tidyverse)
 library(naniar)
 library(here)
+library(patchwork)
 setwd(here())
 theme_set(theme_bw(base_size = 14))
 
@@ -63,6 +64,64 @@ ggplot(data_abx %>% filter(!drug == "antibacterials_for_systemic", !drug == "com
   theme(strip.text.y = element_text(angle = 0)) + 
   coord_flip() + theme(legend.position="bottom")
 ggsave("plots/ATC_code_variation_setting_country.pdf", width = 15, height = 15)
+
+
+data_abx <- data_abx %>% rowwise() %>% mutate(ATC_code_family = substring(ATC_code,1,4)) %>% 
+  mutate(summary_class = ifelse(drug %in% c("b-lactam","other_blactams",
+                                            "sulfonamides_and_trimethoprim","macrolides_lincosamides_streptogramins",
+                                            "Quinolones","aminoglycosides"),
+                                "Yes","No"))
+ggplot(data_abx %>% filter(summary_class == "No",!ATC_code == "JJ", !drug == "antibacterials_for_systemic", !drug == "combination_penicillins_incl_blactamase_inhibitors"), 
+       aes(x = country, y = value)) + 
+  geom_bar(stat = "identity", position = "stack", aes(fill = drug)) + 
+  facet_grid(setting ~ ATC_code_family, scales = "free") + 
+  scale_colour_discrete("Drug") + 
+  scale_x_discrete("Country") + 
+  scale_y_continuous("DDD per 1000 inhabitants and per day") + 
+  theme(strip.text.y = element_text(angle = 0)) + 
+  coord_flip() 
+ggsave("plots/Comm_hosp_variation_fillbar_country.pdf", width = 25, height = 15)
+
+ggplot(data_abx %>% filter(summary_class == "No",!ATC_code == "JJ", !drug == "antibacterials_for_systemic", !drug == "combination_penicillins_incl_blactamase_inhibitors") %>% 
+         group_by(country, setting) %>% summarise(total = sum(value)), 
+       aes(x = country, y = total)) + 
+  geom_point(aes()) + 
+  facet_wrap(~setting, scales = "free") + 
+  scale_colour_discrete("Drug") + 
+  scale_x_discrete("Country") + 
+  scale_y_continuous("Total DDD per 1000 inhabitants and per day") + 
+  theme(strip.text.y = element_text(angle = 0)) + 
+  coord_flip() 
+ggsave("plots/Comm_hosp_variation_total_country.pdf", width = 10, height = 6)
+
+
+ggplot(data_abx %>% filter(summary_class == "No",!ATC_code == "JJ", !macotra == "",!drug == "antibacterials_for_systemic", !drug == "combination_penicillins_incl_blactamase_inhibitors"), 
+       aes(x = country, y = value)) + 
+  geom_bar(stat = "identity", position = "stack", aes(fill = drug)) + 
+  facet_grid(setting ~ ATC_code_family, scales = "free") + 
+  scale_colour_discrete("Drug") + 
+  scale_x_discrete("Country") + 
+  scale_y_continuous("DDD per 1000 inhabitants and per day") + 
+  theme(strip.text.y = element_text(angle = 0)) + 
+  coord_flip() 
+ggsave("plots/Comm_hosp_variation_fillbar_country_macotra.pdf", width = 20, height = 6)
+
+g2 <- ggplot(data_abx %>% filter(summary_class == "No",!ATC_code == "JJ", !macotra == "", !drug == "antibacterials_for_systemic", !drug == "combination_penicillins_incl_blactamase_inhibitors") %>% 
+         group_by(country, setting) %>% summarise(total = sum(value)), 
+       aes(x = country, y = total)) + 
+  geom_point(aes()) + 
+  facet_wrap(~setting, scales = "free") + 
+  scale_colour_discrete("Drug") + 
+  scale_x_discrete("Country") + 
+  scale_y_continuous("Total DDD per 1000 inhabitants and per day") + 
+  theme(strip.text.y = element_text(angle = 0)) + 
+  coord_flip() 
+ggsave("plots/Comm_hosp_variation_total_country_mactora.pdf", width = 10, height = 3)
+
+
+
+# g1 / g2
+# ggsave("plots/Comm_hosp_variation_total_country_mactora_both.pdf", width = 10, height = 3)
 
 ## Highest use 
 data_abx %>% filter(!drug == "antibacterials_for_systemic", !drug == "combination_penicillins_incl_blactamase_inhibitors") %>% 

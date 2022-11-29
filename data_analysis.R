@@ -10,6 +10,7 @@ library(broom)
 library(nlme)
 library(here)
 library(patchwork)
+library(ggh4x) # for facet_nested
 setwd(here())
 theme_set(theme_bw(base_size = 14))
 
@@ -71,10 +72,11 @@ ggplot(data_abx, aes(x=value, y = infection_per_100000, label = macotra, group =
 ggsave("plots/data_by_drug&setting.pdf", width = 10, height = 14)
 
 ## Explore specific drug classes
-data_abx <- data_abx %>% rowwise() %>% mutate(summary_class = ifelse(drug %in% c("b-lactam","other_blactams",
-                                                                                 "sulfonamides_and_trimethoprim","macrolides_lincosamides_streptogramins",
-                                                                                 "Quinolones","aminoglycosides","macrolides"),
-                                                                     "Yes","No"))
+data_abx <- data_abx %>% rowwise() %>% mutate(ATC_code_family = substring(ATC_code,1,4)) %>% 
+  mutate(summary_class = ifelse(drug %in% c("b-lactam","other_blactams",
+                                            "sulfonamides_and_trimethoprim","macrolides_lincosamides_streptogramins",
+                                            "Quinolones","aminoglycosides","macrolides"),
+                                "Yes","No"))
 data_abx$drug <- factor(data_abx$drug, levels = c("antibacterials_for_systemic", 
                                                   "tetracyclines", 
                                                   "amphenicols", 
@@ -106,13 +108,47 @@ ggplot(data_abx %>% filter(drug %in% c("b-lactam",
                                        "1G_cephalosporins", "2G_cephalosporins", "3G_cephalosporins", 
                                        "4G_cephalosporin", "monobactams", "carbapenems", "other_cephalosporins_and_penems")), 
        aes(x=value, y = infection_per_100000, label = macotra, group = setting)) + geom_point(aes(col = factor(summary_class))) + 
-  facet_grid(setting~drug, scales = "free") + 
+  facet_nested(setting~ATC_code_family + ATC_code, scales = "free") + 
   geom_smooth(method='lm', formula = formula, aes(col = factor(summary_class), fill = factor(summary_class))) +
   geom_point(data = data_abx %>% filter(country %in% c("UK","Netherlands","France"))%>% filter(drug %in% c("pen","b-lact")), pch = 3) + 
   geom_text(hjust=-0.17,vjust=0) + 
   stat_poly_eq(aes(label =  paste(after_stat(rr.label),
                                   after_stat(p.value.label),
                                   sep = "*\", \"*")), formula = formula,label.x.npc = 0.9, label.y.npc = 0.9) + 
+  scale_y_continuous(lim = c(0,max(data_abx$infection_per_100000 + 10)), "MRSA incidence per 100,000") + 
+  scale_x_continuous(lim = c(0,NA), "Total usage (DDD 1000 inhabitants and per day)") + 
+  scale_fill_discrete("Summary class") + 
+  scale_color_discrete("Summary class")
+ggsave("plots/fig_blact.pdf", width = 25, height = 10)
+
+
+ggplot(data_abx %>% filter(drug %in% c("b-lactam",
+                                       "penicillins_with_extended_spectrum",
+                                       "blactamase_sensitive_penicillins","blactamase_resistant_penicillins",
+                                       "blactamase_inhibitors","combination_penicillins_incl_blactamase_inhibitors",
+                                       "other_blactams", 
+                                       "1G_cephalosporins", "2G_cephalosporins", "3G_cephalosporins", 
+                                       "4G_cephalosporin", "monobactams", "carbapenems", "other_cephalosporins_and_penems")), 
+       aes(x=value, y = infection_per_100000, label = macotra, group = setting)) + geom_point(aes(col = factor(summary_class))) + 
+  facet_nested(setting~ATC_code_family + ATC_code, scales = "free") + 
+  geom_smooth(method='lm', formula = formula, aes(col = factor(summary_class), fill = factor(summary_class))) +
+  geom_point(data = data_abx %>% filter(country %in% c("UK","Netherlands","France"))%>% filter(drug %in% c("pen","b-lact")), pch = 3) + 
+  geom_text(hjust=-0.17,vjust=0) + 
+  stat_poly_eq(formula = formula, label.x.npc = 0.9, 
+               label.y.npc = 0.9,
+               mapping =  aes(ifelse(after_stat(p.value.label) < 0.05, 
+                                   paste0("<span style='color:red'>", 
+                                          paste(after_stat(rr.label),
+                                                after_stat(p.value.label),
+                                                sep = "*\", \"*"),
+                                          "</span>"),
+                                   paste0("<span style='color:black'>", 
+                                          paste(after_stat(rr.label),
+                                                after_stat(p.value.label),
+                                                sep = "*\", \"*"),
+                                          "</span>")
+                                   )),
+               ) + 
   scale_y_continuous(lim = c(0,max(data_abx$infection_per_100000 + 10)), "MRSA incidence per 100,000") + 
   scale_x_continuous(lim = c(0,NA), "Total usage (DDD 1000 inhabitants and per day)") + 
   scale_fill_discrete("Summary class") + 
@@ -512,7 +548,7 @@ formula = y ~ x
 # ggsave("fig_blact.pdf", width = 20, height = 10)
 # 
 g41 <- ggplot(data_abx %>% filter(drug %in% c("b-lactam","other_blactams"), setting %in% c("Community","Hospital")),
-       aes(x=value, y = log_data, label = macotra, group = setting)) + geom_point(aes(col = factor(summary_class))) +
+              aes(x=value, y = log_data, label = macotra, group = setting)) + geom_point(aes(col = factor(summary_class))) +
   facet_grid(drug ~ setting, scales = "free") +
   geom_smooth(method='lm', formula = formula, aes(fill = factor(summary_class))) +
   geom_point(data = data_abx %>% filter(country %in% c("UK","Netherlands","France"))%>% filter(drug %in% c("pen","b-lact")), pch = 3) +
@@ -528,16 +564,16 @@ g41 <- ggplot(data_abx %>% filter(drug %in% c("b-lactam","other_blactams"), sett
 # 
 # # Ery ciprofloxacin trimethoprim important in THD
 g42 <- ggplot(data_abx %>% filter(!country == "Portugal",
-                           !setting == "Community & Hospital",
-                           drug %in% c("short_acting_macrolides", # Erythromycin in here
-                                       "intermediate_acting_macrolides",
-                                       "long_acting_macrolides",
-                                       "macrolides",
-                                       "Quinolones",
-                                       "fluoroquinolones", # Ciprofloxacin in here
-                                       "sulfonamides_and_trimethoprim",
-                                       "trimethoprim_and_derivatives")), # Trymethoprim in here)),
-       aes(x=value, y = log_data, label = macotra, group = setting)) + geom_point(aes(col = factor(summary_class))) +
+                                  !setting == "Community & Hospital",
+                                  drug %in% c("short_acting_macrolides", # Erythromycin in here
+                                              "intermediate_acting_macrolides",
+                                              "long_acting_macrolides",
+                                              "macrolides",
+                                              "Quinolones",
+                                              "fluoroquinolones", # Ciprofloxacin in here
+                                              "sulfonamides_and_trimethoprim",
+                                              "trimethoprim_and_derivatives")), # Trymethoprim in here)),
+              aes(x=value, y = log_data, label = macotra, group = setting)) + geom_point(aes(col = factor(summary_class))) +
   facet_grid(drug~setting, scales = "free") +
   geom_smooth(method='lm', formula = y~x, aes(fill = factor(summary_class))) +
   geom_point(data = data_abx %>% filter(country %in% c("UK","Netherlands","France"))%>% filter(drug %in% c("pen","b-lact")), pch = 3) +
