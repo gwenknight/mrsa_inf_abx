@@ -43,34 +43,70 @@ data_abx <- data_abx %>% filter(!is.na(value),!is.na(infection_per_100000))
 data_abx$log_data <- log(data_abx$infection_per_100000) # log of infection data
 data_abx$sett_drug <- interaction(data_abx$setting,data_abx$drug,data_abx$ATC_code) # combined flag of setting and drug
 
+## Additional codes for specific drug groupings 
+data_abx[which(data_abx$drug == "1G_quinolones"),"ATC_code"] = "J01M_frst"
+data_abx[which(data_abx$drug == "2G_quinolones"),"ATC_code"] = "J01M_scnd"
+data_abx[which(data_abx$drug == "3G_quinolones"),"ATC_code"] = "J01M_thrd"
+
+data_abx[which(data_abx$drug == "short_acting_macrolides"),"ATC_code"] = "J01FA_shrt"
+data_abx[which(data_abx$drug == "intermediate_acting_macrolides"),"ATC_code"] = "J01FA_intr"
+data_abx[which(data_abx$drug == "long_acting_macrolides"),"ATC_code"] = "J01FA_long"
+
+# Extract ATC code family and assign summary classes 
+data_abx <- data_abx %>% rowwise() %>% mutate(ATC_code_family = substring(ATC_code,1,4)) %>% 
+  mutate(summary_class = ifelse(drug %in% c("b-lactam","other_blactams",
+                                            "sulfonamides_and_trimethoprim","macrolides_lincosamides_streptogramins",
+                                            "Quinolones","macrolides","fluoroquinolones"),
+                                "Yes","No"))
+
+
+
+data_abx$drug <- factor(data_abx$drug, levels = c("antibacterials_for_systemic", 
+                                                  "tetracyclines", 
+                                                  "amphenicols", 
+                                                  "b-lactam",
+                                                  "penicillins_with_extended_spectrum", "blactamase_sensitive_penicillins", 
+                                                  "blactamase_resistant_penicillins", "blactamase_inhibitors", 
+                                                  "combination_penicillins_incl_blactamase_inhibitors", 
+                                                  "other_blactams", 
+                                                  "1G_cephalosporins", "2G_cephalosporins", "3G_cephalosporins", 
+                                                  "4G_cephalosporin", "monobactams", "carbapenems", "other_cephalosporins_and_penems", 
+                                                  "Quinolones", 
+                                                  "1G_quinolones", "2G_quinolones", "3G_quinolones", 
+                                                  "fluoroquinolones", "other_quinolones", 
+                                                  "sulfonamides_and_trimethoprim", 
+                                                  "trimethoprim_and_derivatives", "short_acting_sulfonamides", "intermediate_acting_sulfonamides", 
+                                                  "sulfonamides_and_trimethoprim_combs",
+                                                  "macrolides_lincosamides_streptogramins", 
+                                                  "macrolides", "lincosamides", "streptogramins", 
+                                                  "short_acting_macrolides", "intermediate_acting_macrolides", "long_acting_macrolides", 
+                                                  "aminoglycosides", 
+                                                  "other_aminoglycosides", 
+                                                  "glycopeptides", "polymyxins", "steroid_antibacterials", "imadazole", "nitrofuran"))
+
 ##******************************** Exploration of trends in antibiotic use ***********************************#####################
 ## Variation in drug use 
 ggplot(data_abx %>% filter(!drug == "antibacterials_for_systemic", !drug == "combination_penicillins_incl_blactamase_inhibitors"), 
        aes(x = country, y = value)) + geom_point(aes(col = drug)) + 
   facet_wrap(~setting, scales = "free") + 
-  scale_colour_discrete("Drug") + 
+  scale_colour_discrete("") + 
   scale_x_discrete("Country") + 
   scale_y_continuous("DDD per 1000 inhabitants and per day") + 
   theme(strip.text.y = element_text(angle = 0)) + 
   coord_flip() + theme(legend.position="bottom")
-ggsave("plots/drug_variation_setting_country.pdf", width = 15, height = 15)
+ggsave("plots/drug_variation_setting_country.pdf", width = 11, height = 6)
 
 ggplot(data_abx %>% filter(!drug == "antibacterials_for_systemic", !drug == "combination_penicillins_incl_blactamase_inhibitors"), 
        aes(x = country, y = value)) + geom_point(aes(col = ATC_code)) + 
   facet_wrap(~setting, scales = "free") + 
-  scale_colour_discrete("ATC_code") + 
+  scale_colour_discrete("") + 
   scale_x_discrete("Country") + 
   scale_y_continuous("DDD per 1000 inhabitants and per day") + 
   theme(strip.text.y = element_text(angle = 0)) + 
   coord_flip() + theme(legend.position="bottom")
-ggsave("plots/ATC_code_variation_setting_country.pdf", width = 15, height = 15)
+ggsave("plots/ATC_code_variation_setting_country.pdf", width = 10, height = 6)
 
 
-data_abx <- data_abx %>% rowwise() %>% mutate(ATC_code_family = substring(ATC_code,1,4)) %>% 
-  mutate(summary_class = ifelse(drug %in% c("b-lactam","other_blactams",
-                                            "sulfonamides_and_trimethoprim","macrolides_lincosamides_streptogramins",
-                                            "Quinolones","aminoglycosides"),
-                                "Yes","No"))
 ggplot(data_abx %>% filter(summary_class == "No",!ATC_code == "JJ", !drug == "antibacterials_for_systemic", !drug == "combination_penicillins_incl_blactamase_inhibitors"), 
        aes(x = country, y = value)) + 
   geom_bar(stat = "identity", position = "stack", aes(fill = drug)) + 

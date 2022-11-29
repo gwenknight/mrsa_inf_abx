@@ -48,6 +48,46 @@ data_abx <- data_abx %>% filter(!is.na(value),!is.na(infection_per_100000))
 data_abx$log_data <- log(data_abx$infection_per_100000) # log of infection data
 data_abx$sett_drug <- interaction(data_abx$setting,data_abx$drug,data_abx$ATC_code) # combined flag of setting and drug
 
+## Additional codes for specific drug groupings 
+data_abx[which(data_abx$drug == "1G_quinolones"),"ATC_code"] = "J01M_frst"
+data_abx[which(data_abx$drug == "2G_quinolones"),"ATC_code"] = "J01M_scnd"
+data_abx[which(data_abx$drug == "3G_quinolones"),"ATC_code"] = "J01M_thrd"
+
+data_abx[which(data_abx$drug == "short_acting_macrolides"),"ATC_code"] = "J01FA_shrt"
+data_abx[which(data_abx$drug == "intermediate_acting_macrolides"),"ATC_code"] = "J01FA_intr"
+data_abx[which(data_abx$drug == "long_acting_macrolides"),"ATC_code"] = "J01FA_long"
+
+# Extract ATC code family and assign summary classes 
+data_abx <- data_abx %>% rowwise() %>% mutate(ATC_code_family = substring(ATC_code,1,4)) %>% 
+  mutate(summary_class = ifelse(drug %in% c("b-lactam","other_blactams",
+                                            "sulfonamides_and_trimethoprim","macrolides_lincosamides_streptogramins",
+                                            "Quinolones","macrolides","fluoroquinolones"),
+                                "Yes","No"))
+
+
+
+data_abx$drug <- factor(data_abx$drug, levels = c("antibacterials_for_systemic", 
+                                                  "tetracyclines", 
+                                                  "amphenicols", 
+                                                  "b-lactam",
+                                                  "penicillins_with_extended_spectrum", "blactamase_sensitive_penicillins", 
+                                                  "blactamase_resistant_penicillins", "blactamase_inhibitors", 
+                                                  "combination_penicillins_incl_blactamase_inhibitors", 
+                                                  "other_blactams", 
+                                                  "1G_cephalosporins", "2G_cephalosporins", "3G_cephalosporins", 
+                                                  "4G_cephalosporin", "monobactams", "carbapenems", "other_cephalosporins_and_penems", 
+                                                  "Quinolones", 
+                                                  "1G_quinolones", "2G_quinolones", "3G_quinolones", 
+                                                  "fluoroquinolones", "other_quinolones", 
+                                                  "sulfonamides_and_trimethoprim", 
+                                                  "trimethoprim_and_derivatives", "short_acting_sulfonamides", "intermediate_acting_sulfonamides", 
+                                                  "sulfonamides_and_trimethoprim_combs",
+                                                  "macrolides_lincosamides_streptogramins", 
+                                                  "macrolides", "lincosamides", "streptogramins", 
+                                                  "short_acting_macrolides", "intermediate_acting_macrolides", "long_acting_macrolides", 
+                                                  "aminoglycosides", 
+                                                  "other_aminoglycosides", 
+                                                  "glycopeptides", "polymyxins", "steroid_antibacterials", "imadazole", "nitrofuran"))
 ##******************************** Relationships between drug use and infection incidence ***********************************#####################
 ## Plot everything by drug 
 theme_set(theme_bw(base_size = 10))
@@ -71,34 +111,7 @@ ggplot(data_abx, aes(x=value, y = infection_per_100000, label = macotra, group =
   theme(legend.position="bottom")
 ggsave("plots/data_by_drug&setting.pdf", width = 10, height = 14)
 
-## Explore specific drug classes
-data_abx <- data_abx %>% rowwise() %>% mutate(ATC_code_family = substring(ATC_code,1,4)) %>% 
-  mutate(summary_class = ifelse(drug %in% c("b-lactam","other_blactams",
-                                            "sulfonamides_and_trimethoprim","macrolides_lincosamides_streptogramins",
-                                            "Quinolones","aminoglycosides","macrolides"),
-                                "Yes","No"))
-data_abx$drug <- factor(data_abx$drug, levels = c("antibacterials_for_systemic", 
-                                                  "tetracyclines", 
-                                                  "amphenicols", 
-                                                  "b-lactam",
-                                                  "penicillins_with_extended_spectrum", "blactamase_sensitive_penicillins", 
-                                                  "blactamase_resistant_penicillins", "blactamase_inhibitors", 
-                                                  "combination_penicillins_incl_blactamase_inhibitors", 
-                                                  "other_blactams", 
-                                                  "1G_cephalosporins", "2G_cephalosporins", "3G_cephalosporins", 
-                                                  "4G_cephalosporin", "monobactams", "carbapenems", "other_cephalosporins_and_penems", 
-                                                  "Quinolones", 
-                                                  "1G_quinolones", "2G_quinolones", "3G_quinolones", 
-                                                  "fluoroquinolones", "other_quinolones", 
-                                                  "sulfonamides_and_trimethoprim", 
-                                                  "trimethoprim_and_derivatives", "short_acting_sulfonamides", "intermediate_acting_sulfonamides", 
-                                                  "sulfonamides_and_trimethoprim_combs",
-                                                  "macrolides_lincosamides_streptogramins", 
-                                                  "macrolides", "lincosamides", "streptogramins", 
-                                                  "short_acting_macrolides", "intermediate_acting_macrolides", "long_acting_macrolides", 
-                                                  "aminoglycosides", 
-                                                  "other_aminoglycosides", 
-                                                  "glycopeptides", "polymyxins", "steroid_antibacterials", "imadazole", "nitrofuran"))
+
 
 ggplot(data_abx %>% filter(drug %in% c("b-lactam",
                                        "penicillins_with_extended_spectrum",
@@ -114,13 +127,13 @@ ggplot(data_abx %>% filter(drug %in% c("b-lactam",
   geom_text(hjust=-0.17,vjust=0) + 
   stat_poly_eq(aes(label =  paste(after_stat(rr.label),
                                   after_stat(p.value.label),
-                                  sep = "*\", \"*")), formula = formula,label.x.npc = 0.9, label.y.npc = 0.9) + 
+                                  sep = "*\", \"*")), 
+               formula = formula,label.x.npc = 0.9, label.y.npc = 0.9) + 
   scale_y_continuous(lim = c(0,max(data_abx$infection_per_100000 + 10)), "MRSA incidence per 100,000") + 
   scale_x_continuous(lim = c(0,NA), "Total usage (DDD 1000 inhabitants and per day)") + 
   scale_fill_discrete("Summary class") + 
   scale_color_discrete("Summary class")
 ggsave("plots/fig_blact.pdf", width = 25, height = 10)
-
 
 ggplot(data_abx %>% filter(drug %in% c("b-lactam",
                                        "penicillins_with_extended_spectrum",
@@ -129,75 +142,50 @@ ggplot(data_abx %>% filter(drug %in% c("b-lactam",
                                        "other_blactams", 
                                        "1G_cephalosporins", "2G_cephalosporins", "3G_cephalosporins", 
                                        "4G_cephalosporin", "monobactams", "carbapenems", "other_cephalosporins_and_penems")), 
-       aes(x=value, y = infection_per_100000, label = macotra, group = setting)) + geom_point(aes(col = factor(summary_class))) + 
+       aes(x=value, y = infection_per_100000, label = macotra, group = setting)) + 
+  geom_point(aes()) + 
   facet_nested(setting~ATC_code_family + ATC_code, scales = "free") + 
-  geom_smooth(method='lm', formula = formula, aes(col = factor(summary_class), fill = factor(summary_class))) +
+  geom_smooth(method='lm', formula = formula, aes()) +
   geom_point(data = data_abx %>% filter(country %in% c("UK","Netherlands","France"))%>% filter(drug %in% c("pen","b-lact")), pch = 3) + 
   geom_text(hjust=-0.17,vjust=0) + 
-  stat_poly_eq(formula = formula, label.x.npc = 0.9, 
-               label.y.npc = 0.9,
-               mapping =  aes(ifelse(after_stat(p.value.label) < 0.05, 
-                                   paste0("<span style='color:red'>", 
-                                          paste(after_stat(rr.label),
-                                                after_stat(p.value.label),
-                                                sep = "*\", \"*"),
-                                          "</span>"),
-                                   paste0("<span style='color:black'>", 
-                                          paste(after_stat(rr.label),
-                                                after_stat(p.value.label),
-                                                sep = "*\", \"*"),
-                                          "</span>")
-                                   )),
-               ) + 
+  stat_poly_eq(mapping = aes(label =  paste(after_stat(rr.label),
+                                            after_stat(p.value.label),
+                                            sep = "*\", \"*"),
+                             color = ifelse(after_stat(p.value) < 0.05, "red", "black")), 
+               formula = formula,label.x.npc = 0.9, label.y.npc = 0.9) +
+  scale_color_identity() + 
   scale_y_continuous(lim = c(0,max(data_abx$infection_per_100000 + 10)), "MRSA incidence per 100,000") + 
-  scale_x_continuous(lim = c(0,NA), "Total usage (DDD 1000 inhabitants and per day)") + 
-  scale_fill_discrete("Summary class") + 
-  scale_color_discrete("Summary class")
+  scale_x_continuous(lim = c(0,NA), "Total usage (DDD 1000 inhabitants and per day)") 
 ggsave("plots/fig_blact.pdf", width = 25, height = 10)
+
 
 data_abx %>% filter(drug == "blactamase_inhibitors") %>% arrange(desc(value)) # Portugal outlier in blactamase_inhibitors use
 data_abx %>% filter(drug == "1G_cephalosporins") %>% arrange(desc(value)) # Finland outlier in first gen ceph use
 data_abx %>% filter(drug == "other_cephalosporins_and_penems") %>% arrange(desc(value)) # Slovenia outlier in other_cephalosporins_and_penems use
 
-ggplot(data_abx %>% filter(!country == "Portugal",drug %in% c("b-lactam",
-                                                              "penicillins_with_extended_spectrum",
-                                                              "blactamase_sensitive_penicillins","blactamase_resistant_penicillins",
-                                                              "blactamase_inhibitors","combination_penicillins_incl_blactamase_inhibitors",
-                                                              "other_blactams", 
-                                                              "1G_cephalosporins", "2G_cephalosporins", "3G_cephalosporins", 
-                                                              "4G_cephalosporin", "monobactams", "carbapenems", "other_cephalosporins_and_penems")), 
-       aes(x=value, y = infection_per_100000, label = macotra, group = setting)) + geom_point(aes(col = factor(summary_class))) + 
-  facet_grid(setting~drug, scales = "free") + 
-  geom_smooth(method='lm', formula = formula, aes(col = factor(summary_class), fill = factor(summary_class))) +
+ggplot(data_abx %>% filter(!country == "Portugal", drug %in% c("b-lactam",
+                                       "penicillins_with_extended_spectrum",
+                                       "blactamase_sensitive_penicillins","blactamase_resistant_penicillins",
+                                       "blactamase_inhibitors","combination_penicillins_incl_blactamase_inhibitors",
+                                       "other_blactams", 
+                                       "1G_cephalosporins", "2G_cephalosporins", "3G_cephalosporins", 
+                                       "4G_cephalosporin", "monobactams", "carbapenems", "other_cephalosporins_and_penems")), 
+       aes(x=value, y = infection_per_100000, label = macotra, group = setting)) + 
+  geom_point(aes()) + 
+  facet_nested(setting~ATC_code_family + ATC_code, scales = "free") + 
+  geom_smooth(method='lm', formula = formula, aes()) +
   geom_point(data = data_abx %>% filter(country %in% c("UK","Netherlands","France"))%>% filter(drug %in% c("pen","b-lact")), pch = 3) + 
   geom_text(hjust=-0.17,vjust=0) + 
-  stat_poly_eq(aes(label =  paste(after_stat(rr.label),
-                                  after_stat(p.value.label),
-                                  sep = "*\", \"*")), formula = formula,label.x.npc = 0.9, label.y.npc = 0.9) + 
+  stat_poly_eq(mapping = aes(label =  paste(after_stat(rr.label),
+                                            after_stat(p.value.label),
+                                            sep = "*\", \"*"),
+                             color = ifelse(after_stat(p.value) < 0.05, "red", "black")), 
+               formula = formula,label.x.npc = 0.9, label.y.npc = 0.9) +
+  scale_color_identity() + 
   scale_y_continuous(lim = c(0,max(data_abx$infection_per_100000 + 10)), "MRSA incidence per 100,000") + 
-  scale_x_continuous(lim = c(0,NA), "Total usage (DDD 1000 inhabitants and per day)") + 
-  scale_fill_discrete("Summary class") + 
-  scale_color_discrete("Summary class")
+  scale_x_continuous(lim = c(0,NA), "Total usage (DDD 1000 inhabitants and per day)") 
 ggsave("plots/fig_blact_noPortugal.pdf", width = 25, height = 10)
 
-ggplot(data_abx %>% filter(drug %in% c("b-lactam","combination_penicillins_incl_blactamase_inhibitors",
-                                       "other_blactams", 
-                                       "3G_cephalosporins"), 
-                           !setting == "Community & Hospital"), 
-       aes(x=value, y = infection_per_100000, label = macotra, group = setting)) + geom_point(aes(col = factor(summary_class))) + 
-  facet_grid(drug ~ setting, scales = "free") + 
-  geom_smooth(method='lm', formula = formula, aes(col = factor(summary_class), fill = factor(summary_class))) +
-  geom_point(data = data_abx %>% filter(country %in% c("UK","Netherlands","France"))%>% filter(drug %in% c("pen","b-lact")), pch = 3) + 
-  geom_text(hjust=-0.17,vjust=0) + 
-  stat_poly_eq(aes(label =  paste(after_stat(rr.label),
-                                  after_stat(p.value.label),
-                                  sep = "*\", \"*")), formula = formula,label.x.npc = 0.9, label.y.npc = 0.9) + 
-  theme(strip.text.y = element_text(angle = 0)) + 
-  scale_y_continuous(lim = c(0,max(data_abx$infection_per_100000 + 10)), "MRSA incidence per 100,000") + 
-  scale_x_continuous(lim = c(0,NA), "Total usage (DDD 1000 inhabitants and per day)") + 
-  scale_fill_discrete("Summary class") + 
-  scale_color_discrete("Summary class")
-ggsave("plots/fig_4.pdf", width = 25, height = 10)
 
 ####### Other drugs
 ### Quinolones
@@ -487,6 +475,8 @@ for(i in 1:dim(df_exponential)[1]){
 
 formula = y ~ x
 new_data_exponential <- as.data.frame(new_data_exponential)
+
+
 g4 <- ggplot(new_data_exponential %>% filter(!setting == "Community & Hospital"), aes(x=value, y = log_data, label = macotra, group = setting)) + 
   geom_point(aes(col = factor(summary_class))) + 
   facet_grid(setting ~ drug, scales = "free",labeller = labeller(facet_category = label_wrap_gen(width = 16))) + 
@@ -529,7 +519,35 @@ ggsave("plots/linear_both_just_significant_0.01_nb.pdf", width = 22, height = 16
 g2_nb / g4_nb + plot_annotation(tag_levels = "A")
 ggsave("plots/exponential_both_just_significant_0.01_nb.pdf", width = 22, height = 16)
 
+####### FIGURE 
+g3 <- ggplot(new_data_linear %>% filter(!setting == "Community & Hospital"), aes(x=value, y = infection_per_100000, label = macotra, group = setting)) + 
+  geom_point(aes(col = factor(summary_class))) + 
+  facet_nested(setting~ATC_code_family + ATC_code, scales = "free") + 
+  geom_smooth(method='lm', formula = formula, aes(fill = factor(summary_class))) + 
+  geom_point(data = data_abx %>% filter(!setting == "Community & Hospital",sett_drug %in% unique(new_data_linear$sett_drug), country %in% c("UK","Netherlands","France")), pch = 3) + 
+  geom_text(hjust=-0.17,vjust=0) + 
+  stat_poly_eq(aes(label =  paste(after_stat(rr.label),
+                                  after_stat(p.value.label),
+                                  sep = "*\", \"*")), formula = formula,label.x.npc = 0.9, label.y.npc = 0.9) + 
+  scale_y_continuous(lim = c(0,max(data_abx$infection_per_100000 + 10)), "MRSA incidence per 100,000") + 
+  scale_x_continuous(lim = c(0,NA), "Total usage (DDD 1000 inhabitants and per day)") + 
+  guides(fill="none", col = "none")
 
+g4 <- ggplot(new_data_exponential %>% filter(!setting == "Community & Hospital"), aes(x=value, y = log_data, label = macotra, group = setting)) + 
+  geom_point(aes(col = factor(summary_class))) + 
+  facet_nested(setting~ATC_code_family + ATC_code, scales = "free") + #facet_grid(setting ~ drug, scales = "free",labeller = labeller(facet_category = label_wrap_gen(width = 16))) + 
+  geom_smooth(method='lm', formula = formula, aes(fill = factor(summary_class))) + 
+  geom_point(data = data_abx %>% filter(!setting == "Community & Hospital",sett_drug %in% unique(new_data_exponential$sett_drug), country %in% c("UK","Netherlands","France")), pch = 3) + 
+  geom_text(hjust=-0.17,vjust=0) + 
+  stat_poly_eq(aes(label =  paste(after_stat(rr.label),
+                                  after_stat(p.value.label),
+                                  sep = "*\", \"*")), formula = formula,label.x.npc = 0.9, label.y.npc = 0.9) + 
+  scale_y_continuous(lim = c(0,max(new_data_exponential$log_data + 10)), "Log of MRSA incidence per 100,000") + 
+  scale_x_continuous(lim = c(0,NA), "Total usage (DDD 1000 inhabitants and per day)") + 
+  guides(fill="none", col = "none")
+
+g3 / g4 + plot_annotation(tag_levels = "A")
+ggsave("plots/both_just_significant_0.01_linear_and_exp.pdf", width = 22, height = 16)
 
 # ##### Figure 4??? OLD 
 formula = y ~ x
