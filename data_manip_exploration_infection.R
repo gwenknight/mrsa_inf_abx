@@ -43,6 +43,19 @@ ggplot(data_cass, aes(x=country,y = total_inc_median)) + geom_point() +
   scale_y_continuous("Incidence per 100,000")
 ggsave("plots/mrsa_incidence_by_country.pdf")
 
+## Figure for paper: 
+data_cass_all <- left_join(data_cass_orig, data_cass)
+ggplot(data_cass_all %>% filter(!country == "Iceland"), aes(x=reorder(country,total_inc_median), y = inc_median)) + 
+  geom_bar(stat = "identity", position = "stack", aes(fill = syndrome)) + 
+  geom_point(aes(x = reorder(country,total_inc_median), y = total_inc_median)) + 
+  geom_errorbar(aes(x = reorder(country,total_inc_median), ymin = tot_inc_low, ymax = total_inc_high)) + 
+  scale_fill_discrete("Infection type") + 
+  scale_x_discrete("Country") + 
+  scale_y_continuous("Median incidence per 100,000") + 
+  theme(strip.text.y = element_text(angle = 0)) + 
+  coord_flip() 
+ggsave("plots/FIGURE_mrsa_incidence_by_country.pdf", width = 10, height = 7)
+
 ## Data to use 
 write.csv(data_cass %>% select(country, total_inc_median) %>% rename("infection_per_100000" = "total_inc_median"), 
           "data/cass_infection_output.csv")
