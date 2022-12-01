@@ -431,43 +431,6 @@ ggplot(data_abx %>% filter(drug %in% c("macrolides_lincosamides_streptogramins",
 ggsave("plots/fig_mac_exponential_noPortugal.pdf", width = 25, height = 10)
 
 
-###### old 
-ggplot(data_abx %>% filter(drug %in% c("Quinolones", "1G_quinolones", "2G_quinolones", "3G_quinolones", "fluoroquinolones", "other_quinolones"),
-                           !setting == "Community & Hospital"), 
-       aes(x=value, y = infection_per_100000, label = macotra, group = setting)) + geom_point(aes()) + 
-  facet_grid(drug ~ setting, scales = "free") + 
-  geom_smooth(method='lm', formula = formula, aes()) +
-  geom_point(data = data_abx %>% filter(country %in% c("UK","Netherlands","France"))%>% filter(drug %in% c("pen","b-lact")), pch = 3) + 
-  geom_text(hjust=-0.17,vjust=0) + 
-  stat_poly_eq(mapping = aes(label =  paste(after_stat(rr.label),
-                                            after_stat(p.value.label),
-                                            sep = "*\", \"*"),
-                             color = ifelse(after_stat(p.value) < 0.05, "red", "black")), 
-               formula = formula,label.x.npc = 0.9, label.y.npc = 0.9) +
-  scale_color_identity() + 
-  scale_y_continuous(lim = c(0,max(data_abx$infection_per_100000 + 10)), "MRSA incidence per 100,000") + 
-  scale_x_continuous(lim = c(0,NA), "Total usage (DDD 1000 inhabitants and per day)") + 
-  theme(strip.text.y = element_text(angle = 0)) + 
-  scale_fill_discrete("Summary class") 
-ggsave("plots/fig_quinolones.pdf")
-
-ggplot(data_abx %>% filter(drug %in% c("macrolides_lincosamides_streptogramins", 
-                                       "short_acting_macrolides", "intermediate_acting_macrolides", 
-                                       "long_acting_macrolides", "macrolides", "lincosamides", "streptogramins"),!setting == "Community & Hospital"), 
-       aes(x=value, y = infection_per_100000, label = macotra, group = setting)) + geom_point(aes(col = factor(summary_class))) + 
-  facet_grid(drug ~ setting, scales = "free") + 
-  geom_smooth(method='lm', formula = formula, aes(col = factor(summary_class), fill = factor(summary_class))) +
-  geom_point(data = data_abx %>% filter(country %in% c("UK","Netherlands","France"))%>% filter(drug %in% c("pen","b-lact")), pch = 3) + 
-  geom_text(hjust=-0.17,vjust=0) + 
-  stat_poly_eq(aes(label =  paste(after_stat(rr.label),
-                                  after_stat(p.value.label),
-                                  sep = "*\", \"*")), formula = formula,label.x.npc = 0.9, label.y.npc = 0.9) + 
-  scale_y_continuous(lim = c(0,max(data_abx$infection_per_100000 + 10)), "MRSA incidence per 100,000") + 
-  scale_x_continuous(lim = c(0,NA), "Total usage (DDD 1000 inhabitants and per day)") + 
-  theme(strip.text.y = element_text(angle = 0)) + 
-  scale_fill_discrete("Summary class") + 
-  scale_color_discrete("Summary class")
-ggsave("plots/fig_macrolide.pdf", width = 20, height = 10)
 
 ##******************************** Model fitting analysis ***********************************#####################
 #### Linear model 
