@@ -311,6 +311,42 @@ ggplot(data_abx %>% filter(drug %in% c("Quinolones", "1G_quinolones", "2G_quinol
   scale_size_manual(values = c(1, 1.5), "Summary class")
 ggsave("plots/fig_quin_exponential.pdf", width = 25, height = 10)
 
+ggplot(data_abx %>% filter(!country == "Portugal",drug %in% c("Quinolones", "1G_quinolones", "2G_quinolones", "3G_quinolones", "fluoroquinolones", "other_quinolones")), 
+       aes(x=value, y = infection_per_100000, label = macotra, group = setting)) + 
+  geom_point(aes()) + 
+  facet_nested(setting~ATC_code_family + ATC_code, scales = "free") + 
+  geom_smooth(method='lm', formula = formula, aes(size = factor(summary_class))) +
+  geom_point(data = data_abx %>% filter(country %in% c("UK","Netherlands","France"))%>% filter(drug %in% c("pen","b-lact")), pch = 3) + 
+  geom_text(hjust=-0.17,vjust=0) + 
+  stat_poly_eq(mapping = aes(label =  paste(after_stat(rr.label),
+                                            after_stat(p.value.label),
+                                            sep = "*\", \"*"),
+                             color = ifelse(after_stat(p.value) < 0.05, "red", "black")), 
+               formula = formula,label.x.npc = 0.9, label.y.npc = 0.9) +
+  scale_color_identity() + 
+  scale_y_continuous(lim = c(0,max(data_abx$infection_per_100000 + 10)), "MRSA incidence per 100,000") + 
+  scale_x_continuous(lim = c(0,NA), "Total usage (DDD 1000 inhabitants and per day)") + 
+  scale_size_manual(values = c(1, 1.5), "Summary class")
+ggsave("plots/fig_quin_linear_noPortugal.pdf", width = 25, height = 10)
+
+ggplot(data_abx %>% filter(!country == "Portugal",drug %in% c("Quinolones", "1G_quinolones", "2G_quinolones", "3G_quinolones", "fluoroquinolones", "other_quinolones")), 
+       aes(x=value, y = log(infection_per_100000), label = macotra, group = setting)) + 
+  geom_point(aes()) + 
+  facet_nested(setting~ATC_code_family + ATC_code, scales = "free") + 
+  geom_smooth(method='lm', formula = formula, aes(size = factor(summary_class))) +
+  geom_point(data = data_abx %>% filter(country %in% c("UK","Netherlands","France"))%>% filter(drug %in% c("pen","b-lact")), pch = 3) + 
+  geom_text(hjust=-0.17,vjust=0) + 
+  stat_poly_eq(mapping = aes(label =  paste(after_stat(rr.label),
+                                            after_stat(p.value.label),
+                                            sep = "*\", \"*"),
+                             color = ifelse(after_stat(p.value) < 0.05, "red", "black")), 
+               formula = formula,label.x.npc = 0.9, label.y.npc = 0.9) +
+  scale_color_identity() + 
+  scale_y_continuous(lim = c(0,max(log(data_abx$infection_per_100000 + 10))), "Log. MRSA incidence per 100,000") + 
+  scale_x_continuous(lim = c(0,NA), "Total usage (DDD 1000 inhabitants and per day)") + 
+  scale_size_manual(values = c(1, 1.5), "Summary class")
+ggsave("plots/fig_quin_exponential_noPortugal.pdf", width = 25, height = 10)
+
 ### Macrolides
 ggplot(data_abx %>% filter(drug %in% c("macrolides_lincosamides_streptogramins", 
                                        "short_acting_macrolides", "intermediate_acting_macrolides", 
@@ -395,7 +431,7 @@ ggplot(data_abx %>% filter(drug %in% c("macrolides_lincosamides_streptogramins",
 ggsave("plots/fig_mac_exponential_noPortugal.pdf", width = 25, height = 10)
 
 
-
+###### old 
 ggplot(data_abx %>% filter(drug %in% c("Quinolones", "1G_quinolones", "2G_quinolones", "3G_quinolones", "fluoroquinolones", "other_quinolones"),
                            !setting == "Community & Hospital"), 
        aes(x=value, y = infection_per_100000, label = macotra, group = setting)) + geom_point(aes()) + 
