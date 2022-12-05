@@ -565,7 +565,7 @@ ggsave("plots/data_by_drug_eg_exponential_linear.pdf", width = 10, height = 10)
 write.table(table_stored[order(table_stored$drug),c("setting","drug","model","intercept","value","Rsquared","AIC","pval_value","significant")], 
             file = "table_supp.txt", sep = ",", quote = FALSE, row.names = F)
 
-### plot those significant 
+#######******************* plot those significant ***************************########################
 best_rsq$pval_value <- as.numeric(best_rsq$pval_value)
 df_linear <- best_rsq %>% filter(pval_value < 0.01, model == "linear")
 df_exponential <- best_rsq %>% filter(pval_value < 0.01, model == "exponential")
@@ -576,31 +576,40 @@ for(i in 1:dim(df_linear)[1]){
 }
 
 new_data_linear <- as.data.frame(new_data_linear)
+
 g1 <- ggplot(new_data_linear %>% filter(!setting == "Community & Hospital"), aes(x=value, y = infection_per_100000, label = macotra, group = setting)) + 
-  geom_point(aes(col = factor(summary_class))) + 
-  facet_grid(setting~drug, scales = "free") + 
-  geom_smooth(method='lm', formula = formula, aes(fill = factor(summary_class))) + 
+  geom_point(aes()) + 
+  facet_nested(setting~ATC_code_family + ATC_code, scales = "free") + 
+  geom_smooth(method='lm', formula = formula, aes(size = summary_class)) +
   geom_point(data = data_abx %>% filter(!setting == "Community & Hospital",sett_drug %in% unique(new_data_linear$sett_drug), country %in% c("UK","Netherlands","France")), pch = 3) + 
   geom_text(hjust=-0.17,vjust=0) + 
-  stat_poly_eq(aes(label =  paste(after_stat(rr.label),
-                                  after_stat(p.value.label),
-                                  sep = "*\", \"*")), formula = formula,label.x.npc = 0.9, label.y.npc = 0.9) + 
+  stat_poly_eq(mapping = aes(label =  paste(after_stat(rr.label),
+                                            after_stat(p.value.label),
+                                            sep = "*\", \"*"),
+                             color = ifelse(after_stat(p.value) < 0.05, "red", "black")), 
+               formula = formula,label.x.npc = 0.9, label.y.npc = 0.9) +
+  scale_color_identity() + 
   scale_y_continuous(lim = c(0,max(data_abx$infection_per_100000 + 10)), "MRSA incidence per 100,000") + 
   scale_x_continuous(lim = c(0,NA), "Total usage (DDD 1000 inhabitants and per day)") + 
+  scale_size_manual(values = c(1, 1.5), "Summary class") + 
   guides(fill="none", col = "none")
 ggsave("plots/linear_just_significant_0.01.pdf", width = 22, height = 8)
 
 g1_nb <- ggplot(new_data_linear %>% filter(!drug %in% blacts, !setting == "Community & Hospital"), aes(x=value, y = infection_per_100000, label = macotra, group = setting)) + 
-  geom_point(aes(col = factor(summary_class))) + 
-  facet_grid(setting~drug, scales = "free") + 
-  geom_smooth(method='lm', formula = formula, aes(fill = factor(summary_class))) + 
+  geom_point(aes()) + 
+  facet_nested(setting~ATC_code_family + ATC_code, scales = "free") + 
+  geom_smooth(method='lm', formula = formula, aes(size = summary_class)) +
   geom_point(data = data_abx %>% filter(!drug %in% blacts, !setting == "Community & Hospital",sett_drug %in% unique(new_data_linear$sett_drug), country %in% c("UK","Netherlands","France")), pch = 3) + 
   geom_text(hjust=-0.17,vjust=0) + 
-  stat_poly_eq(aes(label =  paste(after_stat(rr.label),
-                                  after_stat(p.value.label),
-                                  sep = "*\", \"*")), formula = formula,label.x.npc = 0.9, label.y.npc = 0.9) + 
+  stat_poly_eq(mapping = aes(label =  paste(after_stat(rr.label),
+                                            after_stat(p.value.label),
+                                            sep = "*\", \"*"),
+                             color = ifelse(after_stat(p.value) < 0.05, "red", "black")), 
+               formula = formula,label.x.npc = 0.9, label.y.npc = 0.9) +
+  scale_color_identity() + 
   scale_y_continuous(lim = c(0,max(data_abx$infection_per_100000 + 10)), "MRSA incidence per 100,000") + 
   scale_x_continuous(lim = c(0,NA), "Total usage (DDD 1000 inhabitants and per day)") + 
+  scale_size_manual(values = c(1, 1.5), "Summary class") + 
   guides(fill="none", col = "none")
 
 new_data_exponential <- c()
@@ -611,30 +620,38 @@ for(i in 1:dim(df_exponential)[1]){
 formula = y ~ x
 new_data_exponential <- as.data.frame(new_data_exponential)
 g2 <- ggplot(new_data_exponential %>% filter(!setting == "Community & Hospital"), aes(x=value, y = log_data, label = macotra, group = setting)) + 
-  geom_point(aes(col = factor(summary_class))) + 
-  facet_grid(setting ~ drug, scales = "free",labeller = labeller(facet_category = label_wrap_gen(width = 16))) + 
-  geom_smooth(method='lm', formula = formula, aes(fill = factor(summary_class))) + 
+  geom_point(aes()) + 
+  facet_nested(setting~ATC_code_family + ATC_code, scales = "free") + 
+  geom_smooth(method='lm', formula = formula, aes(size = summary_class)) +
   geom_point(data = data_abx %>% filter(!setting == "Community & Hospital",sett_drug %in% unique(new_data_exponential$sett_drug), country %in% c("UK","Netherlands","France")), pch = 3) + 
   geom_text(hjust=-0.17,vjust=0) + 
-  stat_poly_eq(aes(label =  paste(after_stat(rr.label),
-                                  after_stat(p.value.label),
-                                  sep = "*\", \"*")), formula = formula,label.x.npc = 0.9, label.y.npc = 0.9) + 
-  scale_y_continuous(lim = c(0,max(new_data_exponential$log_data + 10)), "Log of MRSA incidence per 100,000") + 
+  stat_poly_eq(mapping = aes(label =  paste(after_stat(rr.label),
+                                            after_stat(p.value.label),
+                                            sep = "*\", \"*"),
+                             color = ifelse(after_stat(p.value) < 0.05, "red", "black")), 
+               formula = formula,label.x.npc = 0.9, label.y.npc = 0.9) +
+  scale_color_identity() + 
+  scale_y_continuous(lim = c(0,max(new_data_exponential$log_data + 2)), "Log of MRSA incidence per 100,000") + 
   scale_x_continuous(lim = c(0,NA), "Total usage (DDD 1000 inhabitants and per day)") + 
+  scale_size_manual(values = c(1, 1.5), "Summary class") + 
   guides(fill="none", col = "none")
 ggsave("plots/exponential_just_significant_0.01.pdf", width = 22, height = 8)
 
 g2_nb <- ggplot(new_data_exponential %>% filter(!drug %in% blacts, !setting == "Community & Hospital"), aes(x=value, y = log_data, label = macotra, group = setting)) + 
-  geom_point(aes(col = factor(summary_class))) + 
-  facet_grid(setting ~ drug, scales = "free",labeller = labeller(facet_category = label_wrap_gen(width = 16))) + 
-  geom_smooth(method='lm', formula = formula, aes(fill = factor(summary_class))) + 
-  geom_point(data = data_abx %>% filter(!drug %in% blacts,!setting == "Community & Hospital",sett_drug %in% unique(new_data_exponential$sett_drug), country %in% c("UK","Netherlands","France")), pch = 3) + 
+  geom_point(aes()) + 
+  facet_nested(setting~ATC_code_family + ATC_code, scales = "free") + 
+  geom_smooth(method='lm', formula = formula, aes(size = summary_class)) +
+  geom_point(data = data_abx %>% filter(!drug %in% blacts, !setting == "Community & Hospital",sett_drug %in% unique(new_data_exponential$sett_drug), country %in% c("UK","Netherlands","France")), pch = 3) + 
   geom_text(hjust=-0.17,vjust=0) + 
-  stat_poly_eq(aes(label =  paste(after_stat(rr.label),
-                                  after_stat(p.value.label),
-                                  sep = "*\", \"*")), formula = formula,label.x.npc = 0.9, label.y.npc = 0.9) + 
-  scale_y_continuous(lim = c(0,max(new_data_exponential$log_data + 10)), "Log of MRSA incidence per 100,000") + 
+  stat_poly_eq(mapping = aes(label =  paste(after_stat(rr.label),
+                                            after_stat(p.value.label),
+                                            sep = "*\", \"*"),
+                             color = ifelse(after_stat(p.value) < 0.05, "red", "black")), 
+               formula = formula,label.x.npc = 0.9, label.y.npc = 0.9) +
+  scale_color_identity() + 
+  scale_y_continuous(lim = c(0,max(new_data_exponential$log_data + 2)), "Log of MRSA incidence per 100,000") + 
   scale_x_continuous(lim = c(0,NA), "Total usage (DDD 1000 inhabitants and per day)") + 
+  scale_size_manual(values = c(1, 1.5), "Summary class") + 
   guides(fill="none", col = "none")
 
 ##### Remove outlier = Portugal ##########
@@ -701,30 +718,38 @@ for(i in 1:dim(df_linear)[1]){
 }
 new_data_linear <- as.data.frame(new_data_linear)
 g3 <- ggplot(new_data_linear %>% filter(!setting == "Community & Hospital"), aes(x=value, y = infection_per_100000, label = macotra, group = setting)) + 
-  geom_point(aes(col = factor(summary_class))) + 
-  facet_grid(setting~drug, scales = "free") + 
-  geom_smooth(method='lm', formula = formula, aes(fill = factor(summary_class))) + 
+  geom_point(aes()) + 
+  facet_nested(setting~ATC_code_family + ATC_code, scales = "free") + 
+  geom_smooth(method='lm', formula = formula, aes(size = summary_class)) +
   geom_point(data = data_abx %>% filter(!setting == "Community & Hospital",sett_drug %in% unique(new_data_linear$sett_drug), country %in% c("UK","Netherlands","France")), pch = 3) + 
   geom_text(hjust=-0.17,vjust=0) + 
-  stat_poly_eq(aes(label =  paste(after_stat(rr.label),
-                                  after_stat(p.value.label),
-                                  sep = "*\", \"*")), formula = formula,label.x.npc = 0.9, label.y.npc = 0.9) + 
+  stat_poly_eq(mapping = aes(label =  paste(after_stat(rr.label),
+                                            after_stat(p.value.label),
+                                            sep = "*\", \"*"),
+                             color = ifelse(after_stat(p.value) < 0.05, "red", "black")), 
+               formula = formula,label.x.npc = 0.9, label.y.npc = 0.9) +
+  scale_color_identity() + 
   scale_y_continuous(lim = c(0,max(data_abx$infection_per_100000 + 10)), "MRSA incidence per 100,000") + 
   scale_x_continuous(lim = c(0,NA), "Total usage (DDD 1000 inhabitants and per day)") + 
+  scale_size_manual(values = c(1, 1.5), "Summary class") + 
   guides(fill="none", col = "none")
 ggsave("plots/linear_no_portugal_just_significant_0.01.pdf", width = 22, height = 8)
 
 g3_nb <- ggplot(new_data_linear %>% filter(!drug %in% blacts, !setting == "Community & Hospital"), aes(x=value, y = infection_per_100000, label = macotra, group = setting)) + 
-  geom_point(aes(col = factor(summary_class))) + 
-  facet_grid(setting~drug, scales = "free") + 
-  geom_smooth(method='lm', formula = formula, aes(fill = factor(summary_class))) + 
-  geom_point(data = data_abx %>% filter(!drug %in% blacts,!setting == "Community & Hospital",sett_drug %in% unique(new_data_linear$sett_drug), country %in% c("UK","Netherlands","France")), pch = 3) + 
+  geom_point(aes()) + 
+  facet_nested(setting~ATC_code_family + ATC_code, scales = "free") + 
+  geom_smooth(method='lm', formula = formula, aes(size = summary_class)) +
+  geom_point(data = data_abx %>% filter(!drug %in% blacts, !setting == "Community & Hospital",sett_drug %in% unique(new_data_linear$sett_drug), country %in% c("UK","Netherlands","France")), pch = 3) + 
   geom_text(hjust=-0.17,vjust=0) + 
-  stat_poly_eq(aes(label =  paste(after_stat(rr.label),
-                                  after_stat(p.value.label),
-                                  sep = "*\", \"*")), formula = formula,label.x.npc = 0.9, label.y.npc = 0.9) + 
+  stat_poly_eq(mapping = aes(label =  paste(after_stat(rr.label),
+                                            after_stat(p.value.label),
+                                            sep = "*\", \"*"),
+                             color = ifelse(after_stat(p.value) < 0.05, "red", "black")), 
+               formula = formula,label.x.npc = 0.9, label.y.npc = 0.9) +
+  scale_color_identity() + 
   scale_y_continuous(lim = c(0,max(data_abx$infection_per_100000 + 10)), "MRSA incidence per 100,000") + 
   scale_x_continuous(lim = c(0,NA), "Total usage (DDD 1000 inhabitants and per day)") + 
+  scale_size_manual(values = c(1, 1.5), "Summary class") + 
   guides(fill="none", col = "none")
 
 new_data_exponential <- c()
@@ -736,44 +761,52 @@ formula = y ~ x
 new_data_exponential <- as.data.frame(new_data_exponential)
 
 
-g4 <- ggplot(new_data_exponential %>% filter(!setting == "Community & Hospital"), aes(x=value, y = log_data, label = macotra, group = setting)) + 
-  geom_point(aes(col = factor(summary_class))) + 
-  facet_grid(setting ~ drug, scales = "free",labeller = labeller(facet_category = label_wrap_gen(width = 16))) + 
-  geom_smooth(method='lm', formula = formula, aes(fill = factor(summary_class))) + 
+g4 <- ggplot(new_data_exponential %>% filter( !setting == "Community & Hospital"), aes(x=value, y = log_data, label = macotra, group = setting)) + 
+  geom_point(aes()) + 
+  facet_nested(setting~ATC_code_family + ATC_code, scales = "free") + 
+  geom_smooth(method='lm', formula = formula, aes(size = summary_class)) +
   geom_point(data = data_abx %>% filter(!setting == "Community & Hospital",sett_drug %in% unique(new_data_exponential$sett_drug), country %in% c("UK","Netherlands","France")), pch = 3) + 
   geom_text(hjust=-0.17,vjust=0) + 
-  stat_poly_eq(aes(label =  paste(after_stat(rr.label),
-                                  after_stat(p.value.label),
-                                  sep = "*\", \"*")), formula = formula,label.x.npc = 0.9, label.y.npc = 0.9) + 
-  scale_y_continuous(lim = c(0,max(new_data_exponential$log_data + 10)), "Log of MRSA incidence per 100,000") + 
+  stat_poly_eq(mapping = aes(label =  paste(after_stat(rr.label),
+                                            after_stat(p.value.label),
+                                            sep = "*\", \"*"),
+                             color = ifelse(after_stat(p.value) < 0.05, "red", "black")), 
+               formula = formula,label.x.npc = 0.9, label.y.npc = 0.9) +
+  scale_color_identity() + 
+  scale_y_continuous(lim = c(0,max(new_data_exponential$log_data + 2)), "Log of MRSA incidence per 100,000") + 
   scale_x_continuous(lim = c(0,NA), "Total usage (DDD 1000 inhabitants and per day)") + 
+  scale_size_manual(values = c(1, 1.5), "Summary class") + 
   guides(fill="none", col = "none")
 ggsave("plots/exponential_no_portugal_just_significant_0.01.pdf", width = 22, height = 8)
 
 g4_nb <- ggplot(new_data_exponential %>% filter(!drug %in% blacts, !setting == "Community & Hospital"), aes(x=value, y = log_data, label = macotra, group = setting)) + 
-  geom_point(aes(col = factor(summary_class))) + 
-  facet_grid(setting ~ drug, scales = "free",labeller = labeller(facet_category = label_wrap_gen(width = 16))) + 
-  geom_smooth(method='lm', formula = formula, aes(fill = factor(summary_class))) + 
-  geom_point(data = data_abx %>% filter(!drug %in% blacts,!setting == "Community & Hospital",sett_drug %in% unique(new_data_exponential$sett_drug), country %in% c("UK","Netherlands","France")), pch = 3) + 
+  geom_point(aes()) + 
+  facet_nested(setting~ATC_code_family + ATC_code, scales = "free") + 
+  geom_smooth(method='lm', formula = formula, aes(size = summary_class)) +
+  geom_point(data = data_abx %>% filter(!drug %in% blacts, !setting == "Community & Hospital",sett_drug %in% unique(new_data_exponential$sett_drug), country %in% c("UK","Netherlands","France")), pch = 3) + 
   geom_text(hjust=-0.17,vjust=0) + 
-  stat_poly_eq(aes(label =  paste(after_stat(rr.label),
-                                  after_stat(p.value.label),
-                                  sep = "*\", \"*")), formula = formula,label.x.npc = 0.9, label.y.npc = 0.9) + 
-  scale_y_continuous(lim = c(0,max(new_data_exponential$log_data + 10)), "Log of MRSA incidence per 100,000") + 
+  stat_poly_eq(mapping = aes(label =  paste(after_stat(rr.label),
+                                            after_stat(p.value.label),
+                                            sep = "*\", \"*"),
+                             color = ifelse(after_stat(p.value) < 0.05, "red", "black")), 
+               formula = formula,label.x.npc = 0.9, label.y.npc = 0.9) +
+  scale_color_identity() + 
+  scale_y_continuous(lim = c(0,max(new_data_exponential$log_data + 2)), "Log of MRSA incidence per 100,000") + 
   scale_x_continuous(lim = c(0,NA), "Total usage (DDD 1000 inhabitants and per day)") + 
+  scale_size_manual(values = c(1, 1.5), "Summary class") + 
   guides(fill="none", col = "none")
 
 
 
 ### Combine for supplementary
 g1 / g3 + plot_annotation(tag_levels = "A")
-ggsave("plots/linear_both_just_significant_0.01_all.pdf", width = 22, height = 16)
+ggsave("plots/linear_both_just_significant_0.01_all.pdf", width = 12, height = 8)
 
 g2 / g4 + plot_annotation(tag_levels = "A")
 ggsave("plots/exponential_both_just_significant_0.01_all.pdf", width = 22, height = 16)
 
 g1_nb / g3_nb + plot_annotation(tag_levels = "A")
-ggsave("plots/linear_both_just_significant_0.01_nb.pdf", width = 22, height = 16)
+ggsave("plots/linear_both_just_significant_0.01_nb.pdf", width = 12, height = 8)
 
 g2_nb / g4_nb + plot_annotation(tag_levels = "A")
 ggsave("plots/exponential_both_just_significant_0.01_nb.pdf", width = 22, height = 16)
@@ -824,6 +857,42 @@ formula = y ~ x
 #   scale_x_continuous("Total usage (DDD 1000 inhabitants and per day)")
 # ggsave("fig_blact.pdf", width = 20, height = 10)
 # 
+
+g51<- ggplot(data_abx %>% filter(ATC_code_family == "J01C"), 
+             aes(x=value, y = infection_per_100000, label = macotra, group = setting)) + 
+  geom_point(aes()) + 
+  facet_nested(setting~ATC_code_family + ATC_code, scales = "free") + 
+  geom_smooth(method='lm', formula = formula, aes(size = factor(summary_class))) +
+  geom_point(data = data_abx %>% filter(country %in% c("UK","Netherlands","France"))%>% filter(drug %in% c("pen","b-lact")), pch = 3) + 
+  geom_text(hjust=-0.17,vjust=0) + 
+  stat_poly_eq(mapping = aes(label =  paste(after_stat(rr.label),
+                                            after_stat(p.value.label),
+                                            sep = "*\", \"*"),
+                             color = ifelse(after_stat(p.value) < 0.05, "red", "black")), 
+               formula = formula,label.x.npc = 0.9, label.y.npc = 0.9) +
+  scale_color_identity() + 
+  scale_y_continuous(lim = c(0,max((data_abx$infection_per_100000 + 10))), "MRSA incidence per 100,000") + 
+  scale_x_continuous(lim = c(0,NA), "Total usage (DDD 1000 inhabitants and per day)") + 
+  scale_size_manual(values = c(1, 1.5), "Summary class")
+
+ggplot(data_abx %>% filter(ATC_code_family == "J01C"), 
+       aes(x=value, y = log(infection_per_100000), label = macotra, group = setting)) + 
+  geom_point(aes()) + 
+  facet_nested(setting~ATC_code_family + ATC_code, scales = "free") + 
+  geom_smooth(method='lm', formula = formula, aes(size = factor(summary_class))) +
+  geom_point(data = data_abx %>% filter(country %in% c("UK","Netherlands","France"))%>% filter(drug %in% c("pen","b-lact")), pch = 3) + 
+  geom_text(hjust=-0.17,vjust=0) + 
+  stat_poly_eq(mapping = aes(label =  paste(after_stat(rr.label),
+                                            after_stat(p.value.label),
+                                            sep = "*\", \"*"),
+                             color = ifelse(after_stat(p.value) < 0.05, "red", "black")), 
+               formula = formula,label.x.npc = 0.9, label.y.npc = 0.9) +
+  scale_color_identity() + 
+  scale_y_continuous(lim = c(0,max(log(data_abx$infection_per_100000 + 10))), "Log. MRSA incidence per 100,000") + 
+  scale_x_continuous(lim = c(0,NA), "Total usage (DDD 1000 inhabitants and per day)") + 
+  scale_size_manual(values = c(1, 1.5), "Summary class")
+
+
 g41 <- ggplot(data_abx %>% filter(drug %in% c("b-lactam","other_blactams"), setting %in% c("Community","Hospital")),
               aes(x=value, y = log_data, label = macotra, group = setting)) + geom_point(aes(col = factor(summary_class))) +
   facet_grid(drug ~ setting, scales = "free") +
