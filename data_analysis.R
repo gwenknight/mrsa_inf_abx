@@ -587,6 +587,119 @@ ggplot(data_abx %>% filter(!country == "Portugal", ATC_code_family == "J01E"),
         panel.grid.minor=element_line(colour="black"), legend.position = "none")
 ggsave("plots/fig_trim_noPort_linear.pdf", width = 25, height = 10)
 
+### Aminoglycosides
+ggplot(data_abx %>% filter(ATC_code_family == "J01G"), 
+       aes(x=value, y = infection_per_100000, group = setting)) +
+  geom_rect(aes(fill = summary_class),xmin = -Inf,xmax = Inf,
+            ymin = -Inf,ymax = Inf, alpha = 0.1) + 
+  scale_fill_manual("Summary\nclass",breaks = c("No","Yes"), values = c("white","grey90")) + 
+  geom_point(aes()) + 
+  facet_nested(setting~ATC_code_family + ATC_code, scales = "free") + 
+  geom_smooth(method='lm', formula = formula, aes()) +
+  geom_point(data = data_abx %>% filter(country %in% c("UK","Netherlands","France"))%>% 
+               filter(ATC_code == "J01G"), pch = 3) + 
+  geom_text(aes( label = macotra),hjust=-0.17,vjust=0) + 
+  stat_poly_eq(mapping = aes(label =  paste(after_stat(rr.label),
+                                            after_stat(p.value.label),
+                                            sep = "*\", \"*"),
+                             color = ifelse(after_stat(p.value) < 0.05, "red", "black")), 
+               formula = formula,label.x.npc = 0.9, label.y.npc = 0.9) +
+  scale_color_identity() + 
+  scale_y_continuous(lim = c(0,max(data_abx$infection_per_100000 + 10)), "MRSA incidence per 100,000") + 
+  scale_x_continuous(lim = c(0,NA), "Total usage (DDD 1000 inhabitants and per day)") + 
+  ggtitle("Aminoglycosides, all data, linear model")+ 
+  theme(strip.text = element_text(size = 12),
+        axis.text =element_text(size=12),
+        axis.title = element_text(size = 12),
+        plot.title = element_text(size = 12),
+        panel.grid.major=element_line(colour="black"),
+        panel.grid.minor=element_line(colour="black"), legend.position = "none")
+ggsave("plots/fig_amino_linear.pdf", width = 25, height = 10)
+
+ggplot(data_abx %>% filter(ATC_code_family == "J01G"), 
+       aes(x=value, y = infection_per_100000, group = setting)) +
+  geom_rect(aes(fill = summary_class),xmin = -Inf,xmax = Inf,
+            ymin = -Inf,ymax = Inf, alpha = 0.1) + 
+  scale_fill_manual("Summary\nclass",breaks = c("No","Yes"), values = c("white","grey90")) + 
+  geom_point(aes()) + 
+  facet_nested(setting~ATC_code_family + ATC_code, scales = "free") + 
+  geom_smooth(method='lm', formula = formula, aes()) +
+  geom_point(data = data_abx %>% filter(country %in% c("UK","Netherlands","France"))%>% 
+               filter(ATC_code == "J01G"), pch = 3) + 
+  geom_text(aes( label = country),hjust=-0.17,vjust=0) + 
+  stat_poly_eq(mapping = aes(label =  paste(after_stat(rr.label),
+                                            after_stat(p.value.label),
+                                            sep = "*\", \"*"),
+                             color = ifelse(after_stat(p.value) < 0.05, "red", "black")), 
+               formula = formula,label.x.npc = 0.9, label.y.npc = 0.9) +
+  scale_color_identity() + 
+  scale_y_continuous(lim = c(0,max(data_abx$infection_per_100000 + 10)), "MRSA incidence per 100,000") + 
+  scale_x_continuous(lim = c(0,NA), "Total usage (DDD 1000 inhabitants and per day)") + 
+  ggtitle("Aminoglycosides, no Portugal data, linear model")+ 
+  theme(strip.text = element_text(size = 12),
+        axis.text =element_text(size=12),
+        axis.title = element_text(size = 12),
+        plot.title = element_text(size = 12),
+        panel.grid.major=element_line(colour="black"),
+        panel.grid.minor=element_line(colour="black"), legend.position = "none")
+ggsave("plots/fig_amino_countries_linear.pdf", width = 25, height = 10)
+
+ggplot(data_abx %>% filter(!country %in% c("Portugal"), ATC_code_family == "J01G"), 
+       aes(x=value, y = infection_per_100000, group = setting)) +
+  geom_rect(aes(fill = summary_class),xmin = -Inf,xmax = Inf,
+            ymin = -Inf,ymax = Inf, alpha = 0.1) + 
+  scale_fill_manual("Summary\nclass",breaks = c("No","Yes"), values = c("white","grey90")) + 
+  geom_point(aes()) + 
+  facet_nested(setting~ATC_code_family + ATC_code, scales = "free") + 
+  geom_smooth(method='lm', formula = formula, aes()) +
+  geom_point(data = data_abx %>% filter(country %in% c("UK","Netherlands","France"))%>% 
+               filter(!country == !country %in% c("Portugal"), ATC_code == "J01G"), pch = 3) + 
+  geom_text(aes( label = macotra),hjust=-0.17,vjust=0) + 
+  stat_poly_eq(mapping = aes(label =  paste(after_stat(rr.label),
+                                            after_stat(p.value.label),
+                                            sep = "*\", \"*"),
+                             color = ifelse(after_stat(p.value) < 0.05, "red", "black")), 
+               formula = formula,label.x.npc = 0.9, label.y.npc = 0.9) +
+  scale_color_identity() + 
+  scale_y_continuous(lim = c(0,max(data_abx$infection_per_100000 + 10)), "MRSA incidence per 100,000") + 
+  scale_x_continuous(lim = c(0,NA), "Total usage (DDD 1000 inhabitants and per day)") + 
+  ggtitle("Aminoglycosides, no Portugal nor Romania or Italy data, linear model")+ 
+  theme(strip.text = element_text(size = 12),
+        axis.text =element_text(size=12),
+        axis.title = element_text(size = 12),
+        plot.title = element_text(size = 12),
+        panel.grid.major=element_line(colour="black"),
+        panel.grid.minor=element_line(colour="black"), legend.position = "none")
+ggsave("plots/fig_amino_noPort_linear.pdf", width = 25, height = 10)
+
+ggplot(data_abx %>% filter(!country %in% c("Italy","Romania","Portugal"), ATC_code_family == "J01G"), 
+       aes(x=value, y = infection_per_100000, group = setting)) +
+  geom_rect(aes(fill = summary_class),xmin = -Inf,xmax = Inf,
+            ymin = -Inf,ymax = Inf, alpha = 0.1) + 
+  scale_fill_manual("Summary\nclass",breaks = c("No","Yes"), values = c("white","grey90")) + 
+  geom_point(aes()) + 
+  facet_nested(setting~ATC_code_family + ATC_code, scales = "free") + 
+  geom_smooth(method='lm', formula = formula, aes()) +
+  geom_point(data = data_abx %>% filter(country %in% c("UK","Netherlands","France"))%>% 
+               filter(!country == !country %in% c("Italy","Romania","Portugal"), ATC_code == "J01G"), pch = 3) + 
+  geom_text(aes( label = macotra),hjust=-0.17,vjust=0) + 
+  stat_poly_eq(mapping = aes(label =  paste(after_stat(rr.label),
+                                            after_stat(p.value.label),
+                                            sep = "*\", \"*"),
+                             color = ifelse(after_stat(p.value) < 0.05, "red", "black")), 
+               formula = formula,label.x.npc = 0.9, label.y.npc = 0.9) +
+  scale_color_identity() + 
+  scale_y_continuous(lim = c(0,max(data_abx$infection_per_100000 + 10)), "MRSA incidence per 100,000") + 
+  scale_x_continuous(lim = c(0,NA), "Total usage (DDD 1000 inhabitants and per day)") + 
+  ggtitle("Aminoglycosides, no Portugal nor Romania or Italy data, linear model")+ 
+  theme(strip.text = element_text(size = 12),
+        axis.text =element_text(size=12),
+        axis.title = element_text(size = 12),
+        plot.title = element_text(size = 12),
+        panel.grid.major=element_line(colour="black"),
+        panel.grid.minor=element_line(colour="black"), legend.position = "none")
+ggsave("plots/fig_amino_noPort_noRomania_noItaly_linear.pdf", width = 25, height = 10)
+
 ##******************************** Model fitting analysis ***********************************#####################
 #### Linear model 
 ## Is abx use linked to infection across all data?
@@ -1020,34 +1133,37 @@ names(dose.labs) <- c("all_b_lactam",
                       "blactamase_sensitive_penicillins",
                       "fluoroquinolones","macrolides","other_aminoglycosides")
 
+
 g5a<- ggplot(data_abx %>% filter(ATC_code %in% c("J01C_D","J01DD","J01CR","J01CE")), 
-       aes(x=value, y = infection_per_100000, group = setting)) +
+             aes(x=value, y = infection_per_100000, group = setting)) +
   geom_rect(aes(fill = summary_class),xmin = -Inf,xmax = Inf,
             ymin = -Inf,ymax = Inf,alpha=0.1) + 
-  scale_fill_manual("",values = c("white","grey90")) + 
-  geom_point(aes()) + 
+  scale_fill_manual("",values = c("white","grey90"), guide = "none") + 
+  geom_point(data = data_abx %>% filter(ATC_code %in% c("J01C_D","J01DD","J01CR","J01CE"), !country %in% c("UK","Netherlands","France")),aes()) + 
   facet_grid(drug~setting, scales = "free",labeller = labeller(drug = dose.labs)) + 
   geom_smooth(method='lm', formula = formula, aes()) +
-  geom_point(data = data_abx %>% filter(country %in% c("UK","Netherlands","France"))%>% 
-               filter(ATC_code %in% c("J01C_D","J01DD","J01CR","J01CE")), pch = 3) + 
-  geom_text(aes(label = macotra),nudge_x = 0.4,nudge_y=0.1) + 
   stat_poly_eq(mapping = aes(label =  paste(after_stat(rr.label),
                                             after_stat(p.value.label),
                                             sep = "*\", \"*"),
                              color = ifelse(after_stat(p.value) < 0.05, "red", "black")), 
                formula = formula,label.x.npc = 0.9, label.y.npc = 0.9) +
   scale_color_identity() + 
-  scale_y_continuous(lim = c(0,max(data_abx$infection_per_100000+10)), "MRSA incidence per 100,000") + 
-  scale_x_continuous(lim = c(0,NA), "Total usage (DDD 1000 inhabitants and per day)") + 
+  scale_y_continuous(lim = c(0,max(data_abx$infection_per_100000+10)), "MRSA incidence per 100,000 inhabitants") + 
+  scale_x_continuous(lim = c(0,NA), "Total usage (DDD per 1000 inhabitants and per day)") + 
   ggtitle("Beta-lactams") + 
   theme(strip.text.x = element_text(size = 12),
         strip.text.y = element_text(size = 12, angle = 0),
         axis.text =element_text(size=12),
         axis.title = element_text(size = 12),
-          plot.title = element_text(size = 12), 
+        plot.title = element_text(size = 12), 
         panel.grid.major=element_line(colour="black"),
-        panel.grid.minor=element_line(colour="black"),
-        legend.position = "none")
+        panel.grid.minor=element_line(colour="black"), 
+        legend.text = element_text(size = 12),
+        legend.title = element_text(size = 12), 
+        legend.position = "bottom") + 
+  geom_point(data = data_abx %>% filter(country %in% c("UK","Netherlands","France"))%>% 
+               filter(ATC_code %in% c("J01C_D","J01DD","J01CR","J01CE")), aes(shape = country), col = "orange", size = 2) + 
+  scale_shape_discrete("Country")
 ggsave("plots/fig5a.pdf")
 
 g5b<- ggplot(data_abx %>% filter(!country == "Portugal",ATC_code %in% c("J01MA","J01FA","J01GB")), 
@@ -1055,29 +1171,33 @@ g5b<- ggplot(data_abx %>% filter(!country == "Portugal",ATC_code %in% c("J01MA",
   geom_point(aes()) + 
   facet_grid(drug~setting, scales = "free",labeller = labeller(drug = dose.labs)) + 
   geom_smooth(method='lm', formula = formula, aes()) +
-  geom_point(data = data_abx %>% filter(country %in% c("UK","Netherlands","France"))%>% 
-               filter(!country == "Portugal",ATC_code %in% c("J01MA","J01FA","J01GB")), pch = 3) + 
-  geom_text(aes(label = macotra),hjust=0.27,vjust=0) + 
+  geom_point(data = data_abx %>% filter(ATC_code %in% c("J01MA","J01FA","J01GB"), !country %in% c("Portugal","UK","Netherlands","France")),aes()) + 
   stat_poly_eq(mapping = aes(label =  paste(after_stat(rr.label),
                                             after_stat(p.value.label),
                                             sep = "*\", \"*"),
                              color = ifelse(after_stat(p.value) < 0.05, "red", "black")), 
                formula = formula,label.x.npc = 0.9, label.y.npc = 0.9) +
   scale_color_identity() + 
-  scale_y_continuous(lim = c(0,max(data_abx$infection_per_100000+5)), "MRSA incidence per 100,000") + 
-  scale_x_continuous(lim = c(0,NA), "Total usage (DDD 1000 inhabitants and per day)") + 
+  scale_y_continuous(lim = c(0,max(data_abx$infection_per_100000+5)), "MRSA incidence per 100,000 inhabitants") + 
+  scale_x_continuous(lim = c(0,NA), "Total usage (DDD per 1000 inhabitants and per day)") + 
   ggtitle("Other antibiotics") + 
   theme(strip.text.x = element_text(size = 12),
         strip.text.y = element_text(size = 12, angle = 0),
         axis.text =element_text(size=12),
         axis.title = element_text(size = 12),
         plot.title = element_text(size = 12), 
-        legend.position = "none")
+        legend.text = element_text(size = 12),
+        legend.title = element_text(size = 12), 
+        legend.position = "bottom") + 
+  geom_point(data = data_abx %>% filter(ATC_code %in% c("J01MA","J01FA","J01GB")) %>% filter(country %in% c("UK","Netherlands","France")), 
+             aes(shape = country), col = "orange", size = 2) + 
+  scale_shape_discrete("Country")
 ggsave("plots/fig5b.pdf")
 
 g5a + g5b +
   plot_annotation(tag_levels = "A") + 
-  plot_layout(widths = c(2, 2))
+  plot_layout(widths = c(2, 2)) + 
+  plot_layout(guides = "collect") & theme(legend.position = 'bottom')
 ggsave("plots/Figure5.pdf", width = 16, height = 8)
 
 ggplot(data_abx %>% filter(ATC_code_family %in% c("J01E"), !country == "Portugal"), 
