@@ -13,7 +13,7 @@ theme_set(theme_bw(base_size = 14))
 ## Read in data - combined infection incidence and antibiotic use 
 data <- read_csv("data/data_amr_abx_use_macotra.csv")
 data <- data %>% replace_with_na_all(condition = ~.x == "-") # remove all "-" and replace with NA
-data[,2:128] <- apply(data[,2:128], 2, as.numeric)
+data[,2:131] <- apply(data[,2:131], 2, as.numeric)
 
 # Extract setting
 data_abx <- data %>% pivot_longer(cols = "J01 C antibacterials_for_systemic":"J01XE CH nitrofuran") %>% 
@@ -86,7 +86,7 @@ data_abx$drug <- factor(data_abx$drug, levels = c("antibacterials_for_systemic",
 
 ##******************************** Exploration of trends in antibiotic use ***********************************#####################
 ## Variation in drug use 
-ggplot(data_abx %>% filter(!drug == "antibacterials_for_systemic", !drug == "combination_penicillins_incl_blactamase_inhibitors"), 
+ggplot(data_abx %>% filter(!drug == "antibacterials_for_systemic"), 
        aes(x = country, y = value)) + geom_point(aes(col = drug)) + 
   facet_wrap(~setting, scales = "free") + 
   scale_colour_discrete("") + 
@@ -95,6 +95,21 @@ ggplot(data_abx %>% filter(!drug == "antibacterials_for_systemic", !drug == "com
   theme(strip.text.y = element_text(angle = 0)) + 
   coord_flip() + theme(legend.position="bottom")
 ggsave("plots/drug_variation_setting_country.pdf", width = 11, height = 6)
+
+totals_abx = data_abx %>% filter(!drug == "antibacterials_for_systemic") %>% group_by(country,setting) %>% summarise(total = sum(value))
+data_abx_t <- left_join(data_abx, totals_abx %>% filter(setting == "Community & Hospital") %>% select(country, total))
+write.csv(data_abx_t, "data/data_abx_with_totals.csv")
+
+ggplot(data_abx_t %>% filter(!drug == "antibacterials_for_systemic", setting == "Community & Hospital"), 
+       aes(x = reorder(country,total), y = value)) + 
+  geom_bar(stat = "identity", position = "stack", aes(x = reorder(country,total), fill = ATC_code_family)) + 
+  facet_wrap(~setting, scales = "free") + 
+  scale_fill_manual("ATC code family", values = c('#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33','#a65628','#f781bf','#999999')) + 
+  scale_x_discrete("Country") + 
+  scale_y_continuous("DDD per 1000 inhabitants and per day") + 
+  theme(strip.text.y = element_text(angle = 0)) + 
+  coord_flip() + theme(legend.position="bottom")
+ggsave("plots/drug_variation_setting_country_bar.pdf", width = 10, height = 7)
 
 ggplot(data_abx %>% filter(!drug == "antibacterials_for_systemic", !drug == "combination_penicillins_incl_blactamase_inhibitors"), 
        aes(x = country, y = value)) + geom_point(aes(col = ATC_code)) + 
